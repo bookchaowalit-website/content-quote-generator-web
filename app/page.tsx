@@ -1,65 +1,109 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useState } from 'react';
+
+const quotes = [
+  { text: "The only way to do great work is to love what you do.", author: "Steve Jobs", category: "Motivation" },
+  { text: "Innovation distinguishes between a leader and a follower.", author: "Steve Jobs", category: "Leadership" },
+  { text: "Stay hungry, stay foolish.", author: "Steve Jobs", category: "Life" },
+  { text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt", category: "Dreams" },
+  { text: "It is during our darkest moments that we must focus to see the light.", author: "Aristotle", category: "Hope" },
+];
+
+export default function QuoteGenerator() {
+  const [currentQuote, setCurrentQuote] = useState(quotes[0]);
+  const [favorite, setFavorite] = useState<string[]>([]);
+  const [copied, setCopied] = useState(false);
+
+  const generateQuote = () => {
+    let newQuote;
+    do {
+      newQuote = quotes[Math.floor(Math.random() * quotes.length)];
+    } while (newQuote.text === currentQuote.text);
+    setCurrentQuote(newQuote);
+  };
+
+  const toggleFavorite = () => {
+    const quoteText = `${currentQuote.text} - ${currentQuote.author}`;
+    if (favorite.includes(quoteText)) {
+      setFavorite(favorite.filter(f => f !== quoteText));
+    } else {
+      setFavorite([...favorite, quoteText]);
+    }
+  };
+
+  const copyQuote = () => {
+    navigator.clipboard.writeText(`"${currentQuote.text}" - ${currentQuote.author}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:to-gray-800 p-8">
+      <div className="max-w-3xl mx-auto">
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-2">💭 Quote Generator</h1>
+          <p className="text-gray-600 dark:text-gray-300">Get inspired with timeless wisdom</p>
+        </div>
+
+        {/* Quote Display */}
+        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-12 mb-8 relative">
+          <div className="text-6xl text-amber-300 mb-4">"</div>
+          <p className="text-3xl font-semibold text-gray-900 dark:text-white mb-6 leading-relaxed">
+            {currentQuote.text}
           </p>
+          <div className="flex items-center justify-between">
+            <p className="text-xl text-gray-600 dark:text-gray-300">— {currentQuote.author}</p>
+            <span className="px-4 py-2 bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200 rounded-full text-sm">
+              {currentQuote.category}
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        {/* Actions */}
+        <div className="flex gap-4 justify-center mb-12">
+          <button
+            onClick={generateQuote}
+            className="px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition transform hover:scale-105"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            ✨ New Quote
+          </button>
+          <button
+            onClick={toggleFavorite}
+            className={`px-8 py-4 rounded-xl font-bold text-lg shadow-lg transition transform hover:scale-105 ${
+              favorite.includes(`${currentQuote.text} - ${currentQuote.author}`)
+                ? 'bg-red-500 text-white'
+                : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300'
+            }`}
           >
-            Documentation
-          </a>
+            {favorite.includes(`${currentQuote.text} - ${currentQuote.author}` ? '❤️ Saved' : '🤍 Save'}
+          </button>
+          <button
+            onClick={copyQuote}
+            className="px-8 py-4 bg-blue-600 text-white rounded-xl font-bold text-lg shadow-lg hover:bg-blue-700 transition transform hover:scale-105"
+          >
+            {copied ? '✓ Copied!' : '📋 Copy'}
+          </button>
         </div>
-      </main>
+
+        {/* Favorites */}
+        {favorite.length > 0 && (
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">❤️ Your Favorites</h2>
+            <div className="space-y-3">
+              {favorite.map((fav, i) => (
+                <div
+                  key={i}
+                  className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg flex justify-between items-center"
+                >
+                  <p className="flex-1 text-gray-700 dark:text-gray-300 italic">"{fav.split(' - ')[0]}"</p>
+                  <p className="text-gray-500 text-sm">— {fav.split(' - ')[1]}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
