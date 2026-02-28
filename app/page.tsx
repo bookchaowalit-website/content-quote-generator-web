@@ -76,7 +76,7 @@ export default function QuoteGenerator() {
                 : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300'
             }`}
           >
-            {favorite.includes(`${currentQuote.text} - ${currentQuote.author}` ? '❤️ Saved' : '🤍 Save'}
+            {favorite.includes(`${currentQuote.text} - ${currentQuote.author}`) ? '❤️ Saved' : '🤍 Save'}
           </button>
           <button
             onClick={copyQuote}
