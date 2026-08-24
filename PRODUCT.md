@@ -19,6 +19,13 @@ See `README.md` for install and run instructions when present.
 - Not claimed as production-ready unless README and tests prove it.
 - Mobile smoke / emulator acceptance is separate and toolchain-dependent.
 
+## Current product truth
+
+This is a small local quote deck. A visitor generates another authored quote,
+saves favorites in the current page, and copies the selected quote to the
+clipboard. There is no quote API, account, remote favorite list, or claim that
+the quotations are exhaustive.
+
 ## Source README excerpt
 
 ```

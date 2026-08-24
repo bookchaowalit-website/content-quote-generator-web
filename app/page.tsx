@@ -1,109 +1,43 @@
-'use client'
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
-const quotes = [
-  { text: "The only way to do great work is to love what you do.", author: "Steve Jobs", category: "Motivation" },
-  { text: "Innovation distinguishes between a leader and a follower.", author: "Steve Jobs", category: "Leadership" },
-  { text: "Stay hungry, stay foolish.", author: "Steve Jobs", category: "Life" },
-  { text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt", category: "Dreams" },
-  { text: "It is during our darkest moments that we must focus to see the light.", author: "Aristotle", category: "Hope" },
+type Quote = { id: number; text: string; author: string; category: string };
+const QUOTES: Quote[] = [
+  { id: 1, text: "The only way to do great work is to love what you do.", author: "Steve Jobs", category: "Motivation" },
+  { id: 2, text: "Innovation distinguishes between a leader and a follower.", author: "Steve Jobs", category: "Leadership" },
+  { id: 3, text: "Stay hungry, stay foolish.", author: "Steve Jobs", category: "Life" },
+  { id: 4, text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt", category: "Dreams" },
+  { id: 5, text: "It is during our darkest moments that we must focus to see the light.", author: "Aristotle", category: "Hope" },
 ];
 
-export default function QuoteGenerator() {
-  const [currentQuote, setCurrentQuote] = useState(quotes[0]);
-  const [favorite, setFavorite] = useState<string[]>([]);
+export default function Home() {
+  const [selected, setSelected] = useState(QUOTES[0]);
+  const [favorites, setFavorites] = useState<number[]>([]);
   const [copied, setCopied] = useState(false);
 
-  const generateQuote = () => {
-    let newQuote;
-    do {
-      newQuote = quotes[Math.floor(Math.random() * quotes.length)];
-    } while (newQuote.text === currentQuote.text);
-    setCurrentQuote(newQuote);
+  const nextQuote = () => {
+    const candidates = QUOTES.filter((quote) => quote.id !== selected.id);
+    setSelected(candidates[Math.floor(Math.random() * candidates.length)]);
+    setCopied(false);
   };
-
-  const toggleFavorite = () => {
-    const quoteText = `${currentQuote.text} - ${currentQuote.author}`;
-    if (favorite.includes(quoteText)) {
-      setFavorite(favorite.filter(f => f !== quoteText));
-    } else {
-      setFavorite([...favorite, quoteText]);
-    }
-  };
-
-  const copyQuote = () => {
-    navigator.clipboard.writeText(`"${currentQuote.text}" - ${currentQuote.author}`);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const toggleFavorite = () => setFavorites((current) => current.includes(selected.id) ? current.filter((id) => id !== selected.id) : [...current, selected.id]);
+  const copyQuote = async () => {
+    try { await navigator.clipboard.writeText(`“${selected.text}” — ${selected.author}`); setCopied(true); window.setTimeout(() => setCopied(false), 1800); } catch { setCopied(false); }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 dark:from-gray-900 dark:to-gray-800 p-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-2">💭 Quote Generator</h1>
-          <p className="text-gray-600 dark:text-gray-300">Get inspired with timeless wisdom</p>
-        </div>
+    <main className="quote-shell">
+      <div className="quote-frame">
+        <header className="quote-topbar"><a href="https://bookchaowalit.com" className="quote-mark" aria-label="Bookchaowalit home"><span>QUOTE</span> / DESK</a><span>AUTHORED DECK / {QUOTES.length} CARDS</span><span>{favorites.length} SAVED</span></header>
+        <section className="quote-intro"><div><h1>Put a thought<br /><em>on the table.</em></h1><p>A small quote deck for the sentence that needs to travel with you. Deal another card, keep one, or copy it clean.</p></div><div className="quote-stamp" aria-hidden="true"><span>DECK</span><b>{String(selected.id).padStart(2, "0")}</b><span>LOCAL</span></div></section>
 
-        {/* Quote Display */}
-        <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl p-12 mb-8 relative">
-          <div className="text-6xl text-amber-300 mb-4">"</div>
-          <p className="text-3xl font-semibold text-gray-900 dark:text-white mb-6 leading-relaxed">
-            {currentQuote.text}
-          </p>
-          <div className="flex items-center justify-between">
-            <p className="text-xl text-gray-600 dark:text-gray-300">— {currentQuote.author}</p>
-            <span className="px-4 py-2 bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200 rounded-full text-sm">
-              {currentQuote.category}
-            </span>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-4 justify-center mb-12">
-          <button
-            onClick={generateQuote}
-            className="px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition transform hover:scale-105"
-          >
-            ✨ New Quote
-          </button>
-          <button
-            onClick={toggleFavorite}
-            className={`px-8 py-4 rounded-xl font-bold text-lg shadow-lg transition transform hover:scale-105 ${
-              favorite.includes(`${currentQuote.text} - ${currentQuote.author}`)
-                ? 'bg-red-500 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300'
-            }`}
-          >
-            {favorite.includes(`${currentQuote.text} - ${currentQuote.author}`) ? '❤️ Saved' : '🤍 Save'}
-          </button>
-          <button
-            onClick={copyQuote}
-            className="px-8 py-4 bg-blue-600 text-white rounded-xl font-bold text-lg shadow-lg hover:bg-blue-700 transition transform hover:scale-105"
-          >
-            {copied ? '✓ Copied!' : '📋 Copy'}
-          </button>
-        </div>
-
-        {/* Favorites */}
-        {favorite.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">❤️ Your Favorites</h2>
-            <div className="space-y-3">
-              {favorite.map((fav, i) => (
-                <div
-                  key={i}
-                  className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg flex justify-between items-center"
-                >
-                  <p className="flex-1 text-gray-700 dark:text-gray-300 italic">"{fav.split(' - ')[0]}"</p>
-                  <p className="text-gray-500 text-sm">— {fav.split(' - ')[1]}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <section className="quote-desk" aria-label="Quote generator">
+          <aside className="quote-index"><div className="desk-head"><span>THE DECK</span><span>{QUOTES.length} CARDS</span></div><div className="quote-list">{QUOTES.map((quote) => <button type="button" key={quote.id} className={selected.id === quote.id ? "quote-row selected" : "quote-row"} onClick={() => setSelected(quote)} aria-pressed={selected.id === quote.id}><span>{String(quote.id).padStart(2, "0")}</span><strong>{quote.category}</strong><small>{quote.author}</small></button>)}</div><div className="index-note"><span className="field-label">DECK NOTE</span><p>Five authored samples. No remote quote service is connected.</p></div></aside>
+          <article className="quote-card"><div className="desk-head"><span>SELECTED CARD / {selected.category.toUpperCase()}</span><span>READ / KEEP / COPY</span></div><div className="card-paper"><span className="card-number">{String(selected.id).padStart(2, "0")}</span><blockquote>“{selected.text}”</blockquote><p className="quote-author">— {selected.author}</p><span className="quote-category">{selected.category}</span><div className="quote-actions"><button type="button" className="primary" onClick={nextQuote}>Deal another</button><button type="button" className={favorites.includes(selected.id) ? "secondary active" : "secondary"} onClick={toggleFavorite}>{favorites.includes(selected.id) ? "Saved" : "Keep card"}</button><button type="button" className="text-action" onClick={copyQuote}>{copied ? "Copied" : "Copy quote"}</button></div></div><p className="boundary-note"><b>LOCAL DECK</b> / Favorites stay in this page and quotes are authored sample records.</p></article>
+        </section>
+        <footer className="quote-footer"><span>BOOK / DEV TOOLS</span><span>DEAL · KEEP · CARRY</span></footer>
       </div>
-    </div>
+    </main>
   );
 }
