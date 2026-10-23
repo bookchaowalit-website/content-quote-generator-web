@@ -1,15 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
-type Quote = { id: number; text: string; author: string; category: string };
-const QUOTES: Quote[] = [
-  { id: 1, text: "The only way to do great work is to love what you do.", author: "Steve Jobs", category: "Motivation" },
-  { id: 2, text: "Innovation distinguishes between a leader and a follower.", author: "Steve Jobs", category: "Leadership" },
-  { id: 3, text: "Stay hungry, stay foolish.", author: "Steve Jobs", category: "Life" },
-  { id: 4, text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt", category: "Dreams" },
-  { id: 5, text: "It is during our darkest moments that we must focus to see the light.", author: "Aristotle", category: "Hope" },
-];
+import { QUOTES, formatQuote, pickNext, toggleFavorite as toggleId } from "@/lib/quotes";
 
 export default function Home() {
   const [selected, setSelected] = useState(QUOTES[0]);
@@ -17,13 +9,12 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
 
   const nextQuote = () => {
-    const candidates = QUOTES.filter((quote) => quote.id !== selected.id);
-    setSelected(candidates[Math.floor(Math.random() * candidates.length)]);
+    setSelected(pickNext(QUOTES, selected.id, Math.random()));
     setCopied(false);
   };
-  const toggleFavorite = () => setFavorites((current) => current.includes(selected.id) ? current.filter((id) => id !== selected.id) : [...current, selected.id]);
+  const toggleFavorite = () => setFavorites((current) => toggleId(current, selected.id));
   const copyQuote = async () => {
-    try { await navigator.clipboard.writeText(`“${selected.text}” — ${selected.author}`); setCopied(true); window.setTimeout(() => setCopied(false), 1800); } catch { setCopied(false); }
+    try { await navigator.clipboard.writeText(formatQuote(selected)); setCopied(true); window.setTimeout(() => setCopied(false), 1800); } catch { setCopied(false); }
   };
 
   return (
