@@ -1,53 +1,45 @@
-# bookchaowalit-quote-generator-frontend — Product brief
+# Quote Desk (quote generator) — Product truth
 
-**Slug:** `bookchaowalit-website/bookchaowalit-quote-generator-frontend`  
-**Generated:** 2026-08-11 (bulk Book Dev closeout)  
-**Status:** starter / portfolio boundary
+> Inferred from the code and copy (no user interview). Checked against the portfolio card claims review
+> (`portfolio-site-web/docs/audits/CARD-CLAIMS-REVIEW-2026-10.md`, row `quote-generator`, evidence Live→Prototype) on
+> 2026-10-23.
 
-## Purpose
+## What it is
 
-Portfolio repository under Book Dev. This brief records ownership and the
-current honest status so the nested tree is not an empty shell in the task
-system.
+A client-only demo of a five-card quote deck with copy to clipboard.
 
-## Runnable path
+## Who it is for
 
-See `README.md` for install and run instructions when present.
+A portfolio visitor who wants a calm card UI: pick, deal, keep and copy a quote.
 
-## Limits
+## What works today
 
-- Not claimed as production-ready unless README and tests prove it.
-- Mobile smoke / emulator acceptance is separate and toolchain-dependent.
+1. Five hard-coded quotes (Steve Jobs x3, Eleanor Roosevelt, Aristotle Onassis), each with a category; pick one from
+   the deck list.
+2. "Deal another" shows a random different card; "Keep card" toggles a kept mark and the header counts kept cards.
+3. "Copy quote" copies `“text” — author` to the clipboard.
+4. `/api/mcp` answers JSON-RPC with `get_all`, `get_by_id` and `search` (text, author, category) over the same deck.
+5. Front-end and server errors go to Sentry (errors only, personal data stripped) when `NEXT_PUBLIC_SENTRY_DSN` is set.
 
-## Current product truth
+## What does not work (and must not be claimed)
 
-This is a small local quote deck. A visitor generates another authored quote,
-saves favorites in the current page, and copies the selected quote to the
-clipboard. There is no quote API, account, remote favorite list, or claim that
-the quotations are exhaustive.
+- No customizable backgrounds, typography controls, PNG export or custom images (claims removed from the portfolio
+  card in the 2026-10 review).
+- Kept cards live only in page memory; nothing survives a reload. No quote service, account or sync.
+- Attributions are the commonly cited ones and are not sourced (the "darkest moments" line was credited to the
+  philosopher Aristotle; it is usually attributed to Aristotle Onassis and now says so).
 
-## Source README excerpt
+## Live URL and deploy state
 
-```
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+- Live: https://quote-generator.bookchaowalit.com (HTTP 200 on 2026-10-23).
+- The Vercel project `bookchaowalit-quote-generator-frontend` is deployed only by CLI. Last production deployment:
+  2026-10-23 (CLI, commit 893be49, the Next 16.4.2 CVE patch). Its Git link names the old repository
+  (`bookchaowalit/bookchaowalit-quote-generator-frontend`), so a push to `main` does not deploy: the live site lags
+  `main` (no Sentry, old template MCP route) until the owner reconnects Vercel Git to this repository (owner action
+  D9).
+- `NEXT_PUBLIC_SENTRY_DSN` is set on the Vercel project (Sentry project `content-quote-generator-web`, org
+  `personal-yu0`).
 
-## Getting Started
+## Boundaries
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize an
-```
+- Browser-only apart from the stateless `/api/mcp` route.

@@ -1,42 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Quote Desk (quote generator)
 
-## Getting Started
+A small quote deck: five authored quotes you can pick from a list or "deal" at random (never the same card twice in a
+row), mark as kept for this page view, and copy to the clipboard as `“text” — author`. Sample data only, kept in the
+code.
 
-First, run the development server:
+Live: https://quote-generator.bookchaowalit.com (deployed by Vercel CLI; it can lag `main`, see `PRODUCT.md`).
+
+## What it does not do
+
+- No backgrounds, typography controls, image upload or PNG export.
+- No quote service or import. Kept cards are not saved: a reload clears them.
+
+## Run
 
 ```bash
+npm ci
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Checks
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm test           # Vitest: deck logic, MCP route, home page render, Sentry scrubbing
+npm run lint
+npm run typecheck
+npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+CI (`.github/workflows/ci.yml`) runs the shared Node workflow (with a line-coverage gate) and the shared security
+scan on every push and PR to `main`.
 
-## Learn More
+## Code map
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-## Related
-
-- **Mobile App:** [bookchaowalit-quote-generator-mobile](https://github.com/bookchaowalit-mobile/bookchaowalit-quote-generator-mobile)
-- **Portfolio:** [bookchaowalit.com](https://bookchaowalit.com)
-
+- `lib/quotes.ts`: the authored deck plus `pickNext` (random source passed in), `toggleFavorite`, `formatQuote` and
+  `searchQuotes` (used by the page and the MCP route).
+- `app/api/mcp/route.ts`: stateless JSON-RPC endpoint with `get_all`, `get_by_id` and `search` over the deck.
+- `lib/sentry.ts` + `instrumentation*.ts`: error reporting to Sentry, errors only, personal data stripped; off when
+  `NEXT_PUBLIC_SENTRY_DSN` is unset.
+- `app/more-projects/page.tsx`: shared portfolio link page (copied per repository, not a package).
