@@ -1,75 +1,61 @@
-import { NextRequest } from 'next/server';
+import { NextResponse } from "next/server";
+import { QUOTES, searchQuotes } from "@/lib/quotes";
 
-export const runtime = 'edge';
+// Stateless JSON-RPC MCP endpoint over the same authored quote deck the page shows.
 
-interface MCPRequest {
-  jsonrpc: '2.0';
-  id: number | string;
-  method: string;
-  params?: any;
-}
+type RpcRequest = { id?: number | string | null; method?: string; params?: { name?: string; arguments?: Record<string, unknown> } };
 
-interface MCPResponse {
-  jsonrpc: '2.0';
-  id: number | string;
-  result?: any;
-  error?: {
-    code: number;
-    message: string;
-  };
-}
+const TOOLS = [
+  { name: "get_all", description: "List every quote in the deck", inputSchema: { type: "object", properties: {} } },
+  { name: "get_by_id", description: "Get one quote by numeric id", inputSchema: { type: "object", properties: { id: { type: "number" } }, required: ["id"] } },
+  { name: "search", description: "Search quote text, author and category", inputSchema: { type: "object", properties: { query: { type: "string" } }, required: ["query"] } },
+];
 
-async function getData() {
-  return { message: 'Sample data' };
-}
-
-export async function POST(request: NextRequest) {
-  let requestId: number | string = 0;
-
-  try {
-    const body: MCPRequest = await request.json();
-    requestId = body.id;
-    const { method, params, id } = body;
-
-    let result: any = {};
-
-    switch (method) {
-      case 'initialize':
-        result = {
-          protocolVersion: '2024-11-05',
-          capabilities: { tools: {} },
-          serverInfo: { name: 'MCP Server', version: '1.0.0' }
-        };
-        break;
-
-      case 'tools/list':
-        result = {
-          tools: [
-            {
-              name: 'get_data',
-              description: 'Get sample data',
-              inputSchema: { type: 'object', properties: {} }
-            }
-          ]
-        };
-        break;
-
-      case 'tools/call':
-        result = await getData();
-        break;
-
-      default:
-        throw new Error(`Unknown method: ${method}`);
-    }
-
-    return Response.json({ jsonrpc: '2.0', id, result });
-
-  } catch (error) {
-    return Response.json({
-      jsonrpc: '2.0',
-      id: requestId,
-      error: { code: -32603, message: error instanceof Error ? error.message : 'Internal error' }
-    }, { status: 500 });
+class RpcError extends Error {
+  constructor(readonly code: number, message: string) {
+    super(message);
   }
 }
 
+function callTool(name: string | undefined, args: Record<string, unknown> = {}) {
+  switch (name) {
+    case "get_all":
+      return { quotes: QUOTES };
+    case "get_by_id": {
+      const quote = QUOTES.find((entry) => entry.id === Number(args.id));
+      if (!quote) throw new RpcError(-32602, `No quote with id ${String(args.id)}`);
+      return { quote };
+    }
+    case "search":
+      return { quotes: searchQuotes(QUOTES, typeof args.query === "string" ? args.query : "") };
+    default:
+      throw new RpcError(-32602, `Unknown tool: ${String(name)}`);
+  }
+}
+
+export async function POST(request: Request) {
+  let id: RpcRequest["id"] = null;
+  try {
+    const body = (await request.json()) as RpcRequest;
+    id = body.id ?? null;
+    let result: unknown;
+    switch (body.method) {
+      case "initialize":
+        result = { protocolVersion: "2024-11-05", capabilities: { tools: {} }, serverInfo: { name: "Quote Desk", version: "1.0.0" } };
+        break;
+      case "tools/list":
+        result = { tools: TOOLS };
+        break;
+      case "tools/call":
+        result = callTool(body.params?.name, body.params?.arguments);
+        break;
+      default:
+        throw new RpcError(-32601, `Unknown method: ${String(body.method)}`);
+    }
+    return NextResponse.json({ jsonrpc: "2.0", id, result });
+  } catch (error) {
+    const code = error instanceof RpcError ? error.code : -32700;
+    const message = error instanceof RpcError ? error.message : "Parse error";
+    return NextResponse.json({ jsonrpc: "2.0", id, error: { code, message } }, { status: 400 });
+  }
+}
