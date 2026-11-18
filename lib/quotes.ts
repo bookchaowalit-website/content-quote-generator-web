@@ -33,3 +33,20 @@ export function searchQuotes(quotes: Quote[], query: string): Quote[] {
   const needle = query.trim().toLowerCase();
   return quotes.filter((quote) => `${quote.text} ${quote.author} ${quote.category}`.toLowerCase().includes(needle));
 }
+
+/** Where kept cards are stored in this browser. */
+export const SAVED_KEY = "quote-desk-saved-v1";
+
+/** Saved ids from storage: only ids that exist in the deck, without duplicates. Null when missing or invalid. */
+export function parseSaved(raw: string | null, quotes: Quote[] = QUOTES): number[] | null {
+  if (!raw) return null;
+  let value: unknown;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (!Array.isArray(value)) return null;
+  const known = new Set(quotes.map((quote) => quote.id));
+  return [...new Set(value.filter((id): id is number => typeof id === "number" && known.has(id)))];
+}

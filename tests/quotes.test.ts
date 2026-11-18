@@ -43,3 +43,13 @@ describe("formatQuote and searchQuotes", () => {
     expect(searchQuotes(QUOTES, "zzz")).toEqual([]);
   });
 });
+
+describe("parseSaved", () => {
+  it("keeps known ids once and rejects bad data", async () => {
+    const { parseSaved } = await import("@/lib/quotes");
+    expect(parseSaved(null)).toBeNull();
+    expect(parseSaved("{bad")).toBeNull();
+    expect(parseSaved('{"a":1}')).toBeNull();
+    expect(parseSaved("[2,2,99,\"x\",4]")).toEqual([2, 4]);
+  });
+});
