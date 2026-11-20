@@ -32,6 +32,10 @@ A portfolio visitor who wants a calm card UI: pick, deal, keep and copy a quote.
 - Known limit: removing a card from Saved has no Undo toast yet; keep it again from the Deck.
 - Known limit: the current row's button reads "Showing" while its accessible name starts "Show the quote by …", so
   voice control may not match the visible word.
+- Known limit: when this browser will not save (storage blocked or full), cards kept for this visit only are lost
+  as soon as another tab changes the saved list; the page then shows the other tab's list.
+- Known limit: after another tab removes or keeps the card on screen, this tab's button updates but the last status
+  line ("Saved in this browser.") stays until the next action.
 - Attributions are the commonly cited ones and are not sourced (the "darkest moments" line was credited to the
   philosopher Aristotle; it is usually attributed to Aristotle Onassis and now says so).
 
