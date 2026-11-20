@@ -77,6 +77,30 @@ describe("quote desk", () => {
     expect(JSON.parse(localStorage.getItem(SAVED_KEY)!)).toEqual([2, 1]);
   });
 
+  it("Keep card keeps the card even when another tab saved it first", async () => {
+    expect(button("Keep card")).toBeTruthy(); // this tab still shows the card as not kept
+    localStorage.setItem(SAVED_KEY, "[1]"); // another tab kept the same card, no event seen yet
+    await press(button("Keep card"));
+    expect(JSON.parse(localStorage.getItem(SAVED_KEY)!)).toEqual([1]);
+    expect($(".qd-actions button").getAttribute("aria-pressed")).toBe("true");
+    expect($('[role="status"]').textContent).toBe("Saved in this browser.");
+  });
+
+  it("a late copy result does not overwrite a newer status", async () => {
+    let finish: () => void = () => {};
+    const writeText = vi.fn(() => new Promise<void>((resolve) => { finish = resolve; }));
+    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+    await press(button("Copy quote"));
+    vi.stubGlobal("localStorage", { getItem: () => null, setItem: () => { throw new Error("full"); } });
+    try {
+      await press(button("Keep card"));
+      await act(async () => { finish(); });
+      expect($('[role="status"]').textContent).toBe("Kept for this visit only: this browser would not save it.");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("shows another tab's save after a storage event", async () => {
     localStorage.setItem(SAVED_KEY, "[2,3]");
     await act(async () => { window.dispatchEvent(new StorageEvent("storage", { key: SAVED_KEY })); });

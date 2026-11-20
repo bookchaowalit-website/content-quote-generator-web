@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { AppFoot, AppTop, ListButton, Pill } from "@/components/app-shell";
-import { QUOTES, SAVED_KEY, formatQuote, parseSaved, pickNext, toggleFavorite, type Quote } from "@/lib/quotes";
+import { QUOTES, SAVED_KEY, formatQuote, parseSaved, pickNext, type Quote } from "@/lib/quotes";
 import { useStoredState } from "@/lib/use-stored-state";
 
 type View = "deck" | "saved";
@@ -21,30 +21,44 @@ export default function Home() {
   const isSaved = saved.includes(selected.id);
   const shown = view === "deck" ? QUOTES : QUOTES.filter((quote) => saved.includes(quote.id));
 
+  // Every status change takes a new ticket; an async result (copy) only writes if its ticket is still the latest.
+  const statusTicket = useRef(0);
+  const say = useCallback((message: string) => {
+    statusTicket.current += 1;
+    setStatus(message);
+  }, []);
+
   const deal = () => {
     setSelected(pickNext(QUOTES, selected.id, Math.random()));
-    setStatus("");
+    say("");
   };
   const keep = () => {
-    // The toggle is applied to the latest saved list (another tab may have changed it since this render).
-    const { value, saved: stored } = setSaved((current) => toggleFavorite(current, selected.id));
-    const kept = value.includes(selected.id);
-    if (!stored) setStatus(kept ? "Kept for this visit only: this browser would not save it." : "Removed for this visit only: this browser would not save the change.");
-    else setStatus(kept ? "Saved in this browser." : "Removed from saved cards.");
+    // Act on what the button shows (Keep card or Saved), applied to the latest saved list: another tab may have
+    // changed it since this render, and a list that already matches is left alone.
+    const id = selected.id;
+    const want = !isSaved;
+    const { saved: stored } = setSaved((current) =>
+      want ? (current.includes(id) ? current : [...current, id]) : current.includes(id) ? current.filter((entry) => entry !== id) : current,
+    );
+    if (!stored) say(want ? "Kept for this visit only: this browser would not save it." : "Removed for this visit only: this browser would not save the change.");
+    else say(want ? "Saved in this browser." : "Removed from saved cards.");
   };
   const copy = async () => {
+    const ticket = ++statusTicket.current;
+    let message: string;
     try {
       await navigator.clipboard.writeText(formatQuote(selected));
-      setStatus("Copied to the clipboard.");
+      message = "Copied to the clipboard.";
     } catch {
-      setStatus("Copy did not work here. Select the quote and copy it by hand.");
+      message = "Copy did not work here. Select the quote and copy it by hand.";
     }
+    if (ticket === statusTicket.current) setStatus(message);
   };
   const show = (quote: Quote) => {
     // Render the new quote first, so the card's accessible name is the new quote when focus lands on it.
     flushSync(() => {
       setSelected(quote);
-      setStatus("");
+      say("");
     });
     cardRef.current?.focus();
   };

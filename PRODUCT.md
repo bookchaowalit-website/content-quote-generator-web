@@ -25,7 +25,13 @@ A portfolio visitor who wants a calm card UI: pick, deal, keep and copy a quote.
 
 - No customizable backgrounds, typography controls, PNG export or custom images (claims removed from the portfolio
   card in the 2026-10 review).
-- Kept cards live only in page memory; nothing survives a reload. No quote service, account or sync.
+- Kept cards stay in this browser's localStorage only (page memory when storage is blocked or full, and the page
+  says so). No quote service, account or sync.
+- Known limit: two tabs that save different cards in the same instant can still lose one save (the read, change and
+  write are not one transaction; saves made one after the other are merged).
+- Known limit: removing a card from Saved has no Undo toast yet; keep it again from the Deck.
+- Known limit: the current row's button reads "Showing" while its accessible name starts "Show the quote by …", so
+  voice control may not match the visible word.
 - Attributions are the commonly cited ones and are not sourced (the "darkest moments" line was credited to the
   philosopher Aristotle; it is usually attributed to Aristotle Onassis and now says so).
 
