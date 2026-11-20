@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { AppFoot, AppTop, ListButton, Pill } from "@/components/app-shell";
 import { QUOTES, SAVED_KEY, formatQuote, parseSaved, pickNext, toggleFavorite, type Quote } from "@/lib/quotes";
 import { useStoredState } from "@/lib/use-stored-state";
@@ -25,8 +26,11 @@ export default function Home() {
     setStatus("");
   };
   const keep = () => {
-    setSaved((current) => toggleFavorite(current, selected.id));
-    setStatus(isSaved ? "Removed from saved cards." : "Saved in this browser.");
+    // The toggle is applied to the latest saved list (another tab may have changed it since this render).
+    const { value, saved: stored } = setSaved((current) => toggleFavorite(current, selected.id));
+    const kept = value.includes(selected.id);
+    if (!stored) setStatus(kept ? "Kept for this visit only: this browser would not save it." : "Removed for this visit only: this browser would not save the change.");
+    else setStatus(kept ? "Saved in this browser." : "Removed from saved cards.");
   };
   const copy = async () => {
     try {
@@ -37,8 +41,11 @@ export default function Home() {
     }
   };
   const show = (quote: Quote) => {
-    setSelected(quote);
-    setStatus("");
+    // Render the new quote first, so the card's accessible name is the new quote when focus lands on it.
+    flushSync(() => {
+      setSelected(quote);
+      setStatus("");
+    });
     cardRef.current?.focus();
   };
 

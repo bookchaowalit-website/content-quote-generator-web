@@ -62,10 +62,37 @@ describe("quote desk", () => {
     expect(host.querySelector(".as-empty")).not.toBeNull();
   });
 
-  it("shows a quote from the list and moves focus to the card", async () => {
+  it("shows a quote from the list and moves focus to the card once the new quote is on screen", async () => {
+    let quoteAtFocus: string | null | undefined;
+    $(".qd-card").addEventListener("focus", () => { quoteAtFocus = quote(); });
     await press(host.querySelector('[aria-label^="Show the quote by Eleanor"]')!);
     expect(quote()).toContain("beauty of their dreams");
     expect(document.activeElement).toBe($(".qd-card"));
+    expect(quoteAtFocus).toContain("beauty of their dreams");
+  });
+
+  it("does not save over a card another tab kept", async () => {
+    localStorage.setItem(SAVED_KEY, "[2]"); // the other tab saved quote 2 after this tab rendered
+    await press(button("Keep card"));
+    expect(JSON.parse(localStorage.getItem(SAVED_KEY)!)).toEqual([2, 1]);
+  });
+
+  it("shows another tab's save after a storage event", async () => {
+    localStorage.setItem(SAVED_KEY, "[2,3]");
+    await act(async () => { window.dispatchEvent(new StorageEvent("storage", { key: SAVED_KEY })); });
+    const savedList = [...host.querySelectorAll(".as-lists button")].find((b) => b.textContent?.startsWith("Saved"))!;
+    expect(savedList.textContent).toContain("2");
+  });
+
+  it("says so when the card could not be saved in this browser", async () => {
+    vi.stubGlobal("localStorage", { getItem: () => null, setItem: () => { throw new Error("full"); } });
+    try {
+      await press(button("Keep card"));
+      expect($(".qd-actions button").getAttribute("aria-pressed")).toBe("true");
+      expect($('[role="status"]').textContent).toBe("Kept for this visit only: this browser would not save it.");
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it("copies the quote and reports a failure plainly", async () => {

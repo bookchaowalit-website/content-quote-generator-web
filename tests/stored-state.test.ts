@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readStored, resetStoredCache, subscribeStored, writeStored } from "@/lib/use-stored-state";
 
@@ -31,12 +32,40 @@ describe("stored state", () => {
     expect(readStored("b", [2], parseNumbers)).toEqual([2]);
   });
 
-  it("reads a valid stored value and caches it", () => {
+  it("reads a valid stored value, caches it and sees a save from another tab", () => {
     const store = fakeStorage({ k: "[3,4]" });
     vi.stubGlobal("localStorage", store);
-    expect(readStored("k", [], parseNumbers)).toEqual([3, 4]);
-    store.data.set("k", "[9]");
-    expect(readStored("k", [], parseNumbers)).toEqual([3, 4]);
+    const first = readStored("k", [], parseNumbers);
+    expect(first).toEqual([3, 4]);
+    expect(readStored("k", [], parseNumbers)).toBe(first); // same raw text: cached value
+    store.data.set("k", "[9]"); // another tab saved
+    expect(readStored("k", [], parseNumbers)).toEqual([9]);
+  });
+
+  it("re-renders subscribers on a storage event for the key", () => {
+    vi.stubGlobal("localStorage", fakeStorage());
+    const listener = vi.fn();
+    const unsubscribe = subscribeStored("k", listener);
+    window.dispatchEvent(new StorageEvent("storage", { key: "other" }));
+    expect(listener).not.toHaveBeenCalled();
+    window.dispatchEvent(new StorageEvent("storage", { key: "k" }));
+    expect(listener).toHaveBeenCalledTimes(1);
+    unsubscribe();
+    window.dispatchEvent(new StorageEvent("storage", { key: "k" }));
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports whether the write reached storage", () => {
+    vi.stubGlobal("localStorage", fakeStorage());
+    expect(writeStored("k", [1])).toBe(true);
+    vi.stubGlobal("localStorage", {
+      getItem: () => null,
+      setItem: () => {
+        throw new Error("full");
+      },
+    });
+    expect(writeStored("k", [2])).toBe(false);
+    expect(readStored("k", [], parseNumbers)).toEqual([2]); // kept in memory for this visit
   });
 
   it("writes JSON, updates the cache and notifies subscribers", () => {
@@ -63,7 +92,7 @@ describe("stored state", () => {
       },
     });
     expect(readStored("k", [7], parseNumbers)).toEqual([7]);
-    expect(() => writeStored("k", [8])).not.toThrow();
+    expect(writeStored("k", [8])).toBe(false);
     expect(readStored("k", [], parseNumbers)).toEqual([8]);
   });
 });
